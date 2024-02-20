@@ -17,7 +17,21 @@
     nixpkgs,
     flake-utils,
     rust-overlay,
-  }:
+  }: let
+    modules = [
+      {
+        nixpkgs.overlays = [
+          (import rust-overlay)
+          (prev: cur: rec {
+            swyh-rs = cur.callPackage ./default.nix {};
+            swyh-rs-cli = swyh-rs.override {withGui = false;};
+            swyh-rs-gui = swyh-rs.override {withCli = false;};
+          })
+        ];
+      }
+      ./module.nix
+    ];
+  in
     flake-utils.lib.eachDefaultSystem (
       system: let
         overlays = [(import rust-overlay)];
@@ -40,5 +54,8 @@
         };
         formatter = pkgs.alejandra;
       }
-    );
+    )
+    // {
+      inherit modules;
+    };
 }
